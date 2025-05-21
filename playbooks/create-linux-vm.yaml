@@ -25,8 +25,8 @@
     - name: 🌐 Create public IP
       azure_rm_publicipaddress:
         resource_group: "{{ resource_group }}"
-        allocation_method: Static
         name: "{{ pip_name }}"
+        allocation_method: Static
 
     - name: 🛡️ Create network security group
       azure_rm_securitygroup:
@@ -61,8 +61,8 @@
             key_data: "{{ lookup('env', 'PUBLIC_KEY') }}"
         network_interfaces: "{{ nic_name }}"
         image:
-          offer: UbuntuServer
           publisher: Canonical
-          sku: "20_04-lts"
+          offer: UbuntuServer
+          sku: 20_04-lts
           version: latest
         state: present
