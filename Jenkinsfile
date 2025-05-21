@@ -23,12 +23,12 @@ pipeline {
           sshUserPrivateKey(credentialsId: 'ssh-ansible-agent', keyFileVariable: 'PRIVATE_KEY')
         ]) {
           sshagent(['ssh-ansible-agent']) {
-            sh '''
+            sh """
               echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
-              PUBLIC_KEY=$(ssh-keygen -y -f "$PRIVATE_KEY")
+              PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
               echo "🔗 SSH ไปยังเครื่อง Ansible..."
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<"EOF"
                 set -e
                 echo "✅ Activate venv"
                 source ~/ansible-env/bin/activate
@@ -38,7 +38,7 @@ pipeline {
                 export AZURE_SECRET='${AZURE_SECRET}'
                 export AZURE_TENANT='${AZURE_TENANT}'
                 export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
-                export PUBLIC_KEY="${PUBLIC_KEY}"
+                export PUBLIC_KEY="\${PUBLIC_KEY}"
 
                 echo "📂 Clone git project ถ้ายังไม่มี"
                 cd ~
@@ -58,7 +58,7 @@ pipeline {
                 echo "🚀 Run playbook"
                 ansible-playbook create-linux-vm.yaml
               EOF
-            '''
+            """
           }
         }
       }
