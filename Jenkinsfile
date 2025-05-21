@@ -51,7 +51,7 @@ pipeline {
 
                 echo "🚀 รัน playbook พร้อม config-dev.yaml"
                 cd playbooks
-                ansible-playbook create-linux-vm.yaml -e "@../config-dev.yaml"
+                ansible-playbook create-linux-vm.yaml -e "@../config/config-dev.yaml"
               EOF
             """
           }
