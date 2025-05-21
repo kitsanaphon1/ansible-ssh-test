@@ -32,10 +32,10 @@ pipeline {
                 source /home/boho/ansible-env/bin/activate
 
                 echo "📦 Export Azure Credentials และ PUBLIC_KEY"
-                export AZURE_CLIENT_ID="${AZURE_CLIENT_ID}"
-                export AZURE_SECRET="${AZURE_SECRET}"
-                export AZURE_TENANT="${AZURE_TENANT}"
-                export AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
+                export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
+                export AZURE_SECRET='${AZURE_SECRET}'
+                export AZURE_TENANT='${AZURE_TENANT}'
+                export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
                 export PUBLIC_KEY="\${PUBLIC_KEY}"
 
                 echo "📂 เตรียม Git Project"
