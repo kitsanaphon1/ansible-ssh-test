@@ -4,7 +4,7 @@ pipeline {
   environment {
     ANSIBLE_HOST = "4.145.84.26"  // ✅ IP ของเครื่อง Ansible
     SSH_USER     = "boho"
-    GIT_REPO     = "https://github.com/your-org/ansible-ssh-test.git" // ✅ แก้เป็น repo จริง
+    GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git" // ✅ แก้เป็น repo จริง
     PROJECT_DIR  = "ansible-ssh-test"
   }
 
