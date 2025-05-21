@@ -44,7 +44,7 @@ pipeline {
                 echo "📂 Clone git project ถ้ายังไม่มี"
                 cd ~
                 if [ ! -d "${PROJECT_DIR}" ]; then
-                  git clone --branch "\$GIT_BRANCH" "${GIT_REPO}"
+                  git clone -b "\$GIT_BRANCH" --single-branch "${GIT_REPO}"
                 else
                   cd ${PROJECT_DIR}
                   git fetch origin
