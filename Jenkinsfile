@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    ANSIBLE_HOST = "4.145.84.26"    // แก้ตาม IP Ansible VM
+    ANSIBLE_HOST = "4.145.84.26" // 👈 แก้เป็น IP ของ Ansible VM
     SSH_USER = "boho"
   }
 
@@ -16,29 +16,31 @@ pipeline {
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID',   variable: 'AZURE_SUBSCRIPTION_ID'),
           sshUserPrivateKey(credentialsId: 'ssh-ansible-agent', keyFileVariable: 'PRIVATE_KEY')
         ]) {
-          script {
-            def publicKey = sh(script: "ssh-keygen -y -f $PRIVATE_KEY", returnStdout: true).trim()
+          sshagent(['ssh-ansible-agent']) {
+            sh '''
+              echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
+              PUBLIC_KEY=$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-            sh """
+              echo "🔗 เชื่อมต่อไปยัง Ansible VM และรัน playbook..."
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<'EOF'
                 set -e
-                echo "🟢 Activating Ansible venv..."
+                echo "✅ Activate venv"
                 source ~/ansible-env/bin/activate
 
-                echo "🔐 Exporting Azure credentials..."
-                export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
-                export AZURE_SECRET=${AZURE_SECRET}
-                export AZURE_TENANT=${AZURE_TENANT}
-                export AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
-                export PUBLIC_KEY="${publicKey}"
+                echo "📦 Export Azure Credentials"
+                export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
+                export AZURE_SECRET='${AZURE_SECRET}'
+                export AZURE_TENANT='${AZURE_TENANT}'
+                export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
+                export PUBLIC_KEY="${PUBLIC_KEY}"
 
-                echo "📁 Switching to playbook directory..."
+                echo "📂 CD ไปที่ playbook"
                 cd ~/ANSIBLE-SSH-TEST/playbooks
 
-                echo "🚀 Running Ansible playbook..."
+                echo "🚀 รัน playbook"
                 ansible-playbook create-linux-vm.yaml
               EOF
-            """
+            '''
           }
         }
       }
