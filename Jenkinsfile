@@ -1,10 +1,14 @@
 pipeline {
   agent any
 
+  parameters {
+    string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Git branch to deploy')
+  }
+
   environment {
-    ANSIBLE_HOST = "4.145.84.26"  // ✅ IP ของเครื่อง Ansible
+    ANSIBLE_HOST = "4.145.84.26"
     SSH_USER     = "boho"
-    GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git" // ✅ แก้เป็น repo จริง
+    GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
     PROJECT_DIR  = "ansible-ssh-test"
   }
 
@@ -24,7 +28,7 @@ pipeline {
               PUBLIC_KEY=$(ssh-keygen -y -f "$PRIVATE_KEY")
 
               echo "🔗 SSH ไปยังเครื่อง Ansible..."
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<'EOF'
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
                 set -e
                 echo "✅ Activate venv"
                 source ~/ansible-env/bin/activate
@@ -39,10 +43,12 @@ pipeline {
                 echo "📂 Clone git project ถ้ายังไม่มี"
                 cd ~
                 if [ ! -d "${PROJECT_DIR}" ]; then
-                  git clone ${GIT_REPO}
+                  git clone --branch ${GIT_BRANCH} ${GIT_REPO}
                 else
                   cd ${PROJECT_DIR}
-                  git pull
+                  git fetch origin
+                  git checkout ${GIT_BRANCH}
+                  git pull origin ${GIT_BRANCH}
                   cd ..
                 fi
 
