@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Git branch to deploy')
+    string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Git branch to deploy (e.g. main)')
   }
 
   environment {
@@ -50,6 +50,7 @@ pipeline {
                 cd "${PROJECT_DIR}"
                 git fetch origin
                 git checkout -B "\$GIT_BRANCH" "origin/\$GIT_BRANCH"
+                git pull origin "\$GIT_BRANCH"
 
                 echo "🚀 รัน playbook"
                 cd playbooks
