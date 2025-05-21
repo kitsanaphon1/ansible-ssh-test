@@ -1,14 +1,13 @@
 ---
-- name: 🚀 Create Azure Linux VM
+- name: "🚀 Create Azure Linux VM"
   hosts: localhost
   connection: local
-  gather_facts: no
 
   vars_files:
-    - ./config/config-dev.yaml
+    - ../config/config-dev.yaml  # ✅ โหลด config
 
   tasks:
-    - name: 📦 Create resource group
+    - name: "📦 Create resource group"
       azure_rm_resourcegroup:
         name: "{{ resource_group }}"
         location: "{{ location }}"

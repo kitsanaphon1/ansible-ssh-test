@@ -2,11 +2,11 @@ pipeline {
   agent any
 
   environment {
-    GIT_BRANCH  = "dev"
-    ANSIBLE_HOST = "4.145.84.26"
-    SSH_USER     = "boho"
-    GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
-    PROJECT_DIR  = "ansible-ssh-test"
+    GIT_BRANCH    = "dev"
+    ANSIBLE_HOST  = "4.145.84.26"
+    SSH_USER      = "boho"
+    GIT_REPO      = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
+    PROJECT_DIR   = "ansible-ssh-test"
   }
 
   stages {
@@ -36,7 +36,6 @@ pipeline {
                 export AZURE_TENANT='${AZURE_TENANT}'
                 export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
                 export PUBLIC_KEY="\${PUBLIC_KEY}"
-                export GIT_BRANCH="dev"
 
                 echo "📂 เตรียม Git Project"
                 cd ~
@@ -49,7 +48,7 @@ pipeline {
                 git checkout -B dev origin/dev
                 git pull origin dev
 
-                echo "🚀 รัน playbook"
+                echo "🚀 รัน playbook พร้อม config-dev.yaml"
                 cd playbooks
                 ansible-playbook create-linux-vm.yaml
               EOF
