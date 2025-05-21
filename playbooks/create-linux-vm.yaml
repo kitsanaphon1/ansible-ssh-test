@@ -2,17 +2,31 @@
   connection: local
   vars:
     ansible_python_interpreter: /home/boho/ansible-env/bin/python3
+
   tasks:
+    - name: 🧪 ตรวจสอบค่าที่อ่านจาก config-dev.yaml
+      debug:
+        msg:
+          - "📍 Location: {{ location }}"
+          - "📂 Resource Group: {{ resource_group }}"
+          - "🖧 VNet: {{ vnet_name }} / Subnet: {{ subnet_name }}"
+          - "🌐 Public IP: {{ pip_name }}"
+          - "🛡️ NSG: {{ nsg_name }}"
+          - "🧷 NIC: {{ nic_name }}"
+          - "🖥️ VM: {{ vm_name }} / Size: {{ vm_size }}"
+
     - name: 📦 Create resource group
       azure_rm_resourcegroup:
-        name: myResourceGroup
+        name: "{{ resource_group }}"
         location: "{{ location }}"
+      tags: [resource_group]
 
     - name: 🌐 Create virtual network
       azure_rm_virtualnetwork:
         resource_group: "{{ resource_group }}"
         name: "{{ vnet_name }}"
         address_prefixes: "10.0.0.0/16"
+      tags: [vnet]
 
     - name: 🔻 Create subnet
       azure_rm_subnet:
@@ -20,12 +34,14 @@
         name: "{{ subnet_name }}"
         address_prefix: "10.0.1.0/24"
         virtual_network: "{{ vnet_name }}"
+      tags: [subnet]
 
     - name: 🌐 Create public IP
       azure_rm_publicipaddress:
         resource_group: "{{ resource_group }}"
         allocation_method: Static
         name: "{{ pip_name }}"
+      tags: [public_ip]
 
     - name: 🌐 Create network security group
       azure_rm_securitygroup:
@@ -38,6 +54,7 @@
             access: Allow
             priority: 1001
             direction: Inbound
+      tags: [nsg]
 
     - name: 🔗 Create network interface
       azure_rm_networkinterface:
@@ -47,6 +64,7 @@
         subnet: "{{ subnet_name }}"
         public_ip_name: "{{ pip_name }}"
         security_group: "{{ nsg_name }}"
+      tags: [nic]
 
     - name: 🖥️ Create Linux VM
       azure_rm_virtualmachine:
@@ -65,3 +83,4 @@
           sku: "20_04-lts"
           version: latest
         state: present
+      tags: [vm]

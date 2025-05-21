@@ -31,9 +31,6 @@ pipeline {
                 echo "✅ Activate Python venv"
                 source /home/boho/ansible-env/bin/activate
 
-                echo "🧪 ตรวจสอบว่า Azure SDK พร้อมใช้งาน"
-                python -c "import azure.mgmt.recoveryservicesbackup.models"
-
                 echo "📦 Export Azure Credentials"
                 export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
                 export AZURE_SECRET='${AZURE_SECRET}'
