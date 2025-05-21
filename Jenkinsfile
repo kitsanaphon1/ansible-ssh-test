@@ -13,10 +13,10 @@ pipeline {
     stage('🚀 Provision Azure VM via Ansible') {
       steps {
         withCredentials([
-          string(credentialsId: 'AZURE_CLIENT_ID',         variable: 'AZURE_CLIENT_ID'),
-          string(credentialsId: 'AZURE_SECRET',            variable: 'AZURE_SECRET'),
-          string(credentialsId: 'AZURE_TENANT',            variable: 'AZURE_TENANT'),
-          string(credentialsId: 'AZURE_SUBSCRIPTION_ID',   variable: 'AZURE_SUBSCRIPTION_ID'),
+          string(credentialsId: 'AZURE_CLIENT_ID',       variable: 'AZURE_CLIENT_ID'),
+          string(credentialsId: 'AZURE_SECRET',          variable: 'AZURE_SECRET'),
+          string(credentialsId: 'AZURE_TENANT',          variable: 'AZURE_TENANT'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID'),
           sshUserPrivateKey(credentialsId: 'ssh-ansible-agent', keyFileVariable: 'PRIVATE_KEY')
         ]) {
           sshagent(['ssh-ansible-agent']) {
@@ -25,17 +25,17 @@ pipeline {
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
               echo "📡 SSH ไปยังเครื่อง Ansible และรันคำสั่ง"
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<"EOF"
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
                 set -e
 
                 echo "✅ Activate Python venv"
                 source /home/boho/ansible-env/bin/activate
 
-                echo "📦 Export Azure Credentials"
-                export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
-                export AZURE_SECRET='${AZURE_SECRET}'
-                export AZURE_TENANT='${AZURE_TENANT}'
-                export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
+                echo "📦 Export Azure Credentials และ PUBLIC_KEY"
+                export AZURE_CLIENT_ID="${AZURE_CLIENT_ID}"
+                export AZURE_SECRET="${AZURE_SECRET}"
+                export AZURE_TENANT="${AZURE_TENANT}"
+                export AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
                 export PUBLIC_KEY="\${PUBLIC_KEY}"
 
                 echo "📂 เตรียม Git Project"

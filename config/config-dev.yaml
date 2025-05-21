@@ -1,13 +1,10 @@
-resource_group: jenkins-lab-rg
+resource_group: myResourceGroup
 location: southeastasia
-
-vnet_name: jenkins-lab-vnet
-subnet_name: jenkins-lab-subnet
-
-pip_name: jenkins-lab-pip
-nic_name: jenkins-lab-nic
-nsg_name: jenkins-lab-nsg
-
-vm_name: jenkins-ansible-vm
+vnet_name: myVnet
+subnet_name: mySubnet
+pip_name: myPublicIP
+nsg_name: myNSG
+nic_name: myNIC
+vm_name: myVM01
 vm_size: Standard_B1s
 admin_username: azureuser
