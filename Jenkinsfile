@@ -27,13 +27,10 @@ pipeline {
               echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "🔗 SSH ไปยังเครื่อง Ansible..."
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<"EOF"
                 set -e
-                echo "✅ Activate venv"
                 source ~/ansible-env/bin/activate
 
-                echo "📦 Export Azure Credentials"
                 export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
                 export AZURE_SECRET='${AZURE_SECRET}'
                 export AZURE_TENANT='${AZURE_TENANT}'
@@ -41,22 +38,17 @@ pipeline {
                 export PUBLIC_KEY="\${PUBLIC_KEY}"
                 export GIT_BRANCH="${GIT_BRANCH}"
 
-                echo "📂 Clone git project ถ้ายังไม่มี"
                 cd ~
                 if [ ! -d "${PROJECT_DIR}" ]; then
-                  git clone -b "\$GIT_BRANCH" --single-branch "${GIT_REPO}"
-                else
-                  cd ${PROJECT_DIR}
-                  git fetch origin
-                  git checkout "\$GIT_BRANCH"
-                  git pull origin "\$GIT_BRANCH"
-                  cd ..
+                  git clone "${GIT_REPO}"
                 fi
 
-                echo "📂 ไปยัง playbook directory"
-                cd ${PROJECT_DIR}/playbooks
+                cd "${PROJECT_DIR}"
+                git fetch origin
+                git checkout "\$GIT_BRANCH"
+                git pull origin "\$GIT_BRANCH"
 
-                echo "🚀 Run playbook"
+                cd playbooks
                 ansible-playbook create-linux-vm.yaml
               EOF
             """
