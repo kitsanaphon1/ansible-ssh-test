@@ -24,35 +24,42 @@ pipeline {
               echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "📡 SSH ไปยังเครื่อง Ansible และรันคำสั่ง"
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-                set -e
+              echo "📄 สร้างสคริปต์ชั่วคราวสำหรับ remote"
+              cat > run_ansible_remote.sh <<EOF
+#!/bin/bash
+set -e
 
-                echo "✅ Activate Python venv"
-                source /home/boho/ansible-env/bin/activate
+echo "✅ Activate Python venv"
+source /home/boho/ansible-env/bin/activate
 
-                echo "📦 Export Azure Credentials และ PUBLIC_KEY"
-                export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
-                export AZURE_SECRET='${AZURE_SECRET}'
-                export AZURE_TENANT='${AZURE_TENANT}'
-                export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
-                export PUBLIC_KEY="\${PUBLIC_KEY}"
+echo "📦 Export Azure Credentials"
+export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
+export AZURE_SECRET='${AZURE_SECRET}'
+export AZURE_TENANT='${AZURE_TENANT}'
+export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
+export PUBLIC_KEY="\${PUBLIC_KEY}"
 
-                echo "📂 เตรียม Git Project"
-                cd ~
-                if [ ! -d "${PROJECT_DIR}" ]; then
-                  git clone "${GIT_REPO}"
-                fi
+echo "📂 เตรียม Git Project"
+cd ~
+if [ ! -d "${PROJECT_DIR}" ]; then
+  git clone "${GIT_REPO}"
+fi
 
-                cd "${PROJECT_DIR}"
-                git fetch origin
-                git checkout -B ${GIT_BRANCH} origin/${GIT_BRANCH}
-                git pull origin ${GIT_BRANCH}
+cd "${PROJECT_DIR}"
+git fetch origin
+git checkout -B ${GIT_BRANCH} origin/${GIT_BRANCH}
+git pull origin ${GIT_BRANCH}
 
-                echo "🚀 รัน playbook พร้อม config-dev.yaml"
-                cd playbooks
-                ansible-playbook create-linux-vm.yaml -e "@../config/config-dev.yaml"
-              EOF
+echo "🚀 Run playbook พร้อม config-dev.yaml"
+cd playbooks
+ansible-playbook create-linux-vm.yaml -e "@../config/config-dev.yaml"
+EOF
+
+              echo "📡 ส่ง script ไปยังเครื่อง Ansible"
+              scp -o StrictHostKeyChecking=no run_ansible_remote.sh ${SSH_USER}@${ANSIBLE_HOST}:/tmp/
+
+              echo "🚀 รัน script บน Ansible VM"
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'bash /tmp/run_ansible_remote.sh'
             """
           }
         }
