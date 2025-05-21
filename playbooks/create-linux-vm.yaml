@@ -53,16 +53,20 @@
       azure_rm_virtualmachine:
         resource_group: "{{ resource_group }}"
         name: "{{ vm_name }}"
+        location: "{{ location }}"
         vm_size: "{{ vm_size }}"
         admin_username: "{{ admin_username }}"
         ssh_password_enabled: false
+        managed_disk_type: Standard_LRS
         ssh_public_keys:
           - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
             key_data: "{{ lookup('env', 'PUBLIC_KEY') }}"
         network_interfaces: "{{ nic_name }}"
         image:
           publisher: Canonical
-          offer: UbuntuServer
+          offer: 0001-com-ubuntu-server-focal
           sku: 20_04-lts
           version: latest
+        auth_source: env
         state: present
+
