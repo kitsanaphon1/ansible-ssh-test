@@ -31,6 +31,9 @@ pipeline {
                 echo "✅ Activate Python venv"
                 source /home/boho/ansible-env/bin/activate
 
+                echo "🧪 ตรวจสอบว่า Azure SDK พร้อมใช้งาน"
+                python -c "import azure.mgmt.recoveryservicesbackup.models"
+
                 echo "📦 Export Azure Credentials"
                 export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
                 export AZURE_SECRET='${AZURE_SECRET}'
@@ -51,7 +54,7 @@ pipeline {
 
                 echo "🚀 รัน playbook พร้อม config-dev.yaml"
                 cd playbooks
-                ansible-playbook create-linux-vm.yaml
+                ansible-playbook create-linux-vm.yaml -e "@../config-dev.yaml"
               EOF
             """
           }

@@ -1,15 +1,11 @@
----
-- name: "🚀 Create Azure Linux VM"
-  hosts: localhost
+- hosts: localhost
   connection: local
-
-  vars_files:
-    - ../config/config-dev.yaml  # ✅ โหลด config
-
+  vars:
+    ansible_python_interpreter: /home/boho/ansible-env/bin/python3
   tasks:
-    - name: "📦 Create resource group"
+    - name: 📦 Create resource group
       azure_rm_resourcegroup:
-        name: "{{ resource_group }}"
+        name: myResourceGroup
         location: "{{ location }}"
 
     - name: 🌐 Create virtual network
