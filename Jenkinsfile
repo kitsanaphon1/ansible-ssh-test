@@ -2,8 +2,10 @@ pipeline {
   agent any
 
   environment {
-    ANSIBLE_HOST = "4.145.84.26" // 👈 แก้เป็น IP ของ Ansible VM
-    SSH_USER = "boho"
+    ANSIBLE_HOST = "4.145.84.26"  // ✅ IP ของเครื่อง Ansible
+    SSH_USER     = "boho"
+    GIT_REPO     = "https://github.com/your-org/ansible-ssh-test.git" // ✅ แก้เป็น repo จริง
+    PROJECT_DIR  = "ansible-ssh-test"
   }
 
   stages {
@@ -21,7 +23,7 @@ pipeline {
               echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
               PUBLIC_KEY=$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "🔗 เชื่อมต่อไปยัง Ansible VM และรัน playbook..."
+              echo "🔗 SSH ไปยังเครื่อง Ansible..."
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<'EOF'
                 set -e
                 echo "✅ Activate venv"
@@ -34,10 +36,20 @@ pipeline {
                 export AZURE_SUBSCRIPTION_ID='${AZURE_SUBSCRIPTION_ID}'
                 export PUBLIC_KEY="${PUBLIC_KEY}"
 
-                echo "📂 CD ไปที่ playbook"
-                cd ~/ANSIBLE-SSH-TEST/playbooks
+                echo "📂 Clone git project ถ้ายังไม่มี"
+                cd ~
+                if [ ! -d "${PROJECT_DIR}" ]; then
+                  git clone ${GIT_REPO}
+                else
+                  cd ${PROJECT_DIR}
+                  git pull
+                  cd ..
+                fi
 
-                echo "🚀 รัน playbook"
+                echo "📂 ไปยัง playbook directory"
+                cd ${PROJECT_DIR}/playbooks
+
+                echo "🚀 Run playbook"
                 ansible-playbook create-linux-vm.yaml
               EOF
             '''
