@@ -27,8 +27,9 @@ pipeline {
               echo "📡 SSH ไปยังเครื่อง Ansible และรันคำสั่ง"
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<"EOF"
                 set -e
+
                 echo "✅ Activate Python venv"
-                source ~/ansible-env/bin/activate
+                source /home/boho/ansible-env/bin/activate
 
                 echo "📦 Export Azure Credentials"
                 export AZURE_CLIENT_ID='${AZURE_CLIENT_ID}'
@@ -45,8 +46,8 @@ pipeline {
 
                 cd "${PROJECT_DIR}"
                 git fetch origin
-                git checkout -B dev origin/dev
-                git pull origin dev
+                git checkout -B ${GIT_BRANCH} origin/${GIT_BRANCH}
+                git pull origin ${GIT_BRANCH}
 
                 echo "🚀 รัน playbook พร้อม config-dev.yaml"
                 cd playbooks
