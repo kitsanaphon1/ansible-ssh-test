@@ -44,9 +44,11 @@ pipeline {
                 fi
 
                 cd "${PROJECT_DIR}"
-                git fetch origin
-                git checkout "\$GIT_BRANCH"
-                git pull origin "\$GIT_BRANCH"
+
+                echo "🔁 Checkout branch: \$GIT_BRANCH"
+                git fetch --all
+                git checkout "\$GIT_BRANCH" || git checkout -b "\$GIT_BRANCH" origin/"\$GIT_BRANCH"
+                git pull
 
                 cd playbooks
                 ansible-playbook create-linux-vm.yaml
