@@ -1,0 +1,72 @@
+---
+- name: 🚀 Create Azure Linux VM
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - ./config/config-dev.yaml
+
+  tasks:
+    - name: 📦 Create resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group }}"
+        location: "{{ location }}"
+
+    - name: 🌐 Create virtual network
+      azure_rm_virtualnetwork:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vnet_name }}"
+        address_prefixes: "10.0.0.0/16"
+
+    - name: 🔻 Create subnet
+      azure_rm_subnet:
+        resource_group: "{{ resource_group }}"
+        name: "{{ subnet_name }}"
+        address_prefix: "10.0.1.0/24"
+        virtual_network: "{{ vnet_name }}"
+
+    - name: 🌐 Create public IP
+      azure_rm_publicipaddress:
+        resource_group: "{{ resource_group }}"
+        allocation_method: Static
+        name: "{{ pip_name }}"
+
+    - name: 🌐 Create network security group
+      azure_rm_securitygroup:
+        resource_group: "{{ resource_group }}"
+        name: "{{ nsg_name }}"
+        rules:
+          - name: allow-ssh
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 1001
+            direction: Inbound
+
+    - name: 🔗 Create network interface
+      azure_rm_networkinterface:
+        resource_group: "{{ resource_group }}"
+        name: "{{ nic_name }}"
+        virtual_network: "{{ vnet_name }}"
+        subnet: "{{ subnet_name }}"
+        public_ip_name: "{{ pip_name }}"
+        security_group: "{{ nsg_name }}"
+
+    - name: 🖥️ Create Linux VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vm_name }}"
+        vm_size: "{{ vm_size }}"
+        admin_username: "{{ admin_username }}"
+        ssh_password_enabled: false
+        ssh_public_keys:
+          - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
+            key_data: "{{ lookup('env', 'PUBLIC_KEY') }}"
+        network_interfaces: "{{ nic_name }}"
+        image:
+          offer: UbuntuServer
+          publisher: Canonical
+          sku: "20_04-lts"
+          version: latest
+        state: present
