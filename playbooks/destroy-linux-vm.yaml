@@ -5,7 +5,7 @@
 
   tasks:
     - name: ❌ ลบ Virtual Machine
-      azure_rm_virtualmachine:
+      azure.azcollection.azure_rm_virtualmachine:
         resource_group: "{{ resource_group }}"
         name: "{{ vm_name }}"
         state: absent
@@ -15,38 +15,38 @@
           - network_interfaces
 
     - name: ❌ ลบ Network Interface
-      azure_rm_networkinterface:
+      azure.azcollection.azure_rm_networkinterface:
         resource_group: "{{ resource_group }}"
         name: "{{ nic_name }}"
         state: absent
 
     - name: ❌ ลบ Public IP
-      azure_rm_publicipaddress:
+      azure.azcollection.azure_rm_publicipaddress:
         resource_group: "{{ resource_group }}"
         name: "{{ pip_name }}"
         state: absent
 
     - name: ❌ ลบ Subnet (ถ้าไม่ใช้ร่วมกับ resource อื่น)
-      azure_rm_subnet:
+      azure.azcollection.azure_rm_subnet:
         resource_group: "{{ resource_group }}"
         name: "{{ subnet_name }}"
         virtual_network: "{{ vnet_name }}"
         state: absent
 
     - name: ❌ ลบ Virtual Network
-      azure_rm_virtualnetwork:
+      azure.azcollection.azure_rm_virtualnetwork:
         resource_group: "{{ resource_group }}"
         name: "{{ vnet_name }}"
         state: absent
 
     - name: ❌ ลบ Network Security Group
-      azure_rm_securitygroup:
+      azure.azcollection.azure_rm_securitygroup:
         resource_group: "{{ resource_group }}"
         name: "{{ nsg_name }}"
         state: absent
 
     - name: ❌ ลบ Resource Group
-      azure_rm_resourcegroup:
+      azure.azcollection.azure_rm_resourcegroup:
         name: "{{ resource_group }}"
         state: absent
-        force_delete_nonempty: true  # ✅ บังคับลบแม้มี resource ค้างอยู่
+        force_delete_nonempty: true

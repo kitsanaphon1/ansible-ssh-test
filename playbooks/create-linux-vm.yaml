@@ -56,17 +56,19 @@
         vm_size: "{{ vm_size }}"
         admin_username: "{{ admin_username }}"
         ssh_password_enabled: false
-        network_interfaces: "{{ nic_name }}"
+        network_interface_names:
+          - "{{ nic_name }}"
         image:
           offer: UbuntuServer
           publisher: Canonical
           sku: 20_04-lts
           version: latest
-        os_disk:
-          name: "{{ vm_name }}_osdisk"
-          caching: ReadWrite
-          create_option: FromImage
-          managed_disk_type: Standard_LRS
-        admin_ssh_key:
-          username: "{{ admin_username }}"
-          public_key: "{{ admin_ssh_public_key }}"
+        linux_config:
+          disable_password_authentication: true
+          ssh:
+            public_keys:
+              - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
+                key_data: "{{ admin_ssh_public_key }}"
+        os_disk_name: "{{ vm_name }}_osdisk"
+        os_disk_caching: ReadWrite
+        managed_disk_type: Standard_LRS
