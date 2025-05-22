@@ -8,7 +8,7 @@ pipeline {
     SSH_USER      = "boho"         // User สำหรับ SSH เข้า Ansible VM
     GIT_REPO      = "https://github.com/kitsanaphon1/ansible-ssh-test.git"  // Git repo playbook
     PROJECT_DIR   = "ansible-ssh-test"  // โฟลเดอร์ project
-    DESTROY_MODE  = "false"  // ✅ "true" = ลบ VM, "false" = สร้าง VM
+    DESTROY_MODE  = "true"  // ✅ "true" = ลบ VM, "false" = สร้าง VM
   }
 
   stages {
