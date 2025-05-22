@@ -21,11 +21,11 @@ pipeline {
           sshUserPrivateKey(credentialsId: 'ssh-ansible-agent', keyFileVariable: 'PRIVATE_KEY')
         ]) {
           sshagent(['ssh-ansible-agent']) {
-            sh """
-              echo "🔐 สร้าง Public Key จาก Jenkins Credential"
-              PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
+            sh '''
+              echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
+              PUBLIC_KEY=$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "📄 สร้างสคริปต์ remote พร้อมฝัง PUBLIC_KEY"
+              echo "📄 สร้างสคริปต์ remote"
               cat > run_ansible_remote.sh <<EOF
 #!/bin/bash
 set -e
@@ -56,7 +56,7 @@ else
   echo "🚀 สร้าง VM"
   ansible-playbook create-linux-vm.yaml \\
     -e "@../config/config-dev.yaml" \\
-    -e "admin_ssh_public_key=\${PUBLIC_KEY}"
+    -e "admin_ssh_public_key='${PUBLIC_KEY}'"
 fi
 EOF
 
@@ -65,7 +65,7 @@ EOF
 
               echo "🚀 รัน script บน Ansible VM"
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'bash /tmp/run_ansible_remote.sh'
-            """
+            '''
           }
         }
       }
