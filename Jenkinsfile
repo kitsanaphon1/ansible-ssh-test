@@ -2,9 +2,9 @@ pipeline {
   agent any
 
   environment {
-    GIT_BRANCH    = "dev"                     
-    ANSIBLE_HOST  = "4.145.84.26"             
-    SSH_USER      = "boho"                    
+    GIT_BRANCH    = "dev"
+    ANSIBLE_HOST  = "4.145.84.26"
+    SSH_USER      = "boho"
     GIT_REPO      = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
     PROJECT_DIR   = "ansible-ssh-test"
     DESTROY_MODE  = "false"  // "true" = ลบ VM, "false" = สร้าง VM
@@ -26,7 +26,7 @@ pipeline {
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
               echo "📄 สร้างสคริปต์ remote ให้ Ansible VM"
-              cat > run_ansible_remote.sh <<'EOF'
+              cat > run_ansible_remote.sh <<EOF
 #!/bin/bash
 set -e
 source /home/boho/ansible-env/bin/activate
