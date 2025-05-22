@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    SSH_USER     = "boho"                          // SSH user ของทั้ง Ansible VM และ VM เป้าหมาย
-    ANSIBLE_HOST = "4.145.84.26"                   // IP ของ Ansible VM
+    SSH_USER     = "boho"
+    ANSIBLE_HOST = "4.145.84.26"
     PROJECT_DIR  = "ansible-ssh-test"
     GIT_BRANCH   = "dev"
     GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
@@ -71,16 +71,24 @@ EOF
 
     stage('🐳 Install Docker and Docker Compose') {
       steps {
-        sshagent(['ssh-ansible-agent']) {
-          sh """
-            echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
-            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-              source ~/ansible-env/bin/activate
-              cd ${PROJECT_DIR}/playbooks
-              ANSIBLE_HOST_KEY_CHECKING=False \\
-              ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${SSH_USER}
+        script {
+          def vmUser = sh(
+            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
+            returnStdout: true
+          ).trim()
+          echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
+
+          sshagent(['ssh-ansible-agent']) {
+            sh """
+              echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+                source ~/ansible-env/bin/activate
+                cd ${PROJECT_DIR}/playbooks
+                ANSIBLE_HOST_KEY_CHECKING=False \\
+                ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
 EOF
-          """
+            """
+          }
         }
       }
     }
