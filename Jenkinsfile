@@ -2,12 +2,12 @@ pipeline {
   agent any
 
   environment {
-    GIT_BRANCH    = "dev"                     // Branch ที่จะ checkout
-    ANSIBLE_HOST  = "4.145.84.26"             // IP ของเครื่อง Ansible VM
-    SSH_USER      = "boho"                    // SSH user ของ Ansible VM
+    GIT_BRANCH    = "dev"                     
+    ANSIBLE_HOST  = "4.145.84.26"             
+    SSH_USER      = "boho"                    
     GIT_REPO      = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
     PROJECT_DIR   = "ansible-ssh-test"
-    DESTROY_MODE  = "false"                   // "true" = ลบ VM, "false" = สร้าง VM
+    DESTROY_MODE  = "false"  // "true" = ลบ VM, "false" = สร้าง VM
   }
 
   stages {
@@ -25,8 +25,8 @@ pipeline {
               echo "🔐 สร้าง Public Key จาก Jenkins Credential"
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "📄 เตรียมสคริปต์ Remote"
-              cat > run_ansible_remote.sh <<EOF
+              echo "📄 สร้างสคริปต์ remote ให้ Ansible VM"
+              cat > run_ansible_remote.sh <<'EOF'
 #!/bin/bash
 set -e
 source /home/boho/ansible-env/bin/activate
@@ -35,7 +35,7 @@ export AZURE_CLIENT_ID="${AZURE_CLIENT_ID}"
 export AZURE_SECRET="${AZURE_SECRET}"
 export AZURE_TENANT="${AZURE_TENANT}"
 export AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
-export PUBLIC_KEY="\${PUBLIC_KEY}"
+export PUBLIC_KEY="${PUBLIC_KEY}"
 
 cd ~
 
@@ -56,7 +56,7 @@ else
   echo "🚀 สร้าง VM"
   ansible-playbook create-linux-vm.yaml \\
     -e "@../config/config-dev.yaml" \\
-    -e "admin_ssh_public_key=\$PUBLIC_KEY"
+    -e "admin_ssh_public_key=\${PUBLIC_KEY}"
 fi
 EOF
 
