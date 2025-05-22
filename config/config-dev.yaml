@@ -1,10 +1,12 @@
-resource_group: myResourceGroup
+resource_group: rg-vm01-prod
 location: southeastasia
-vnet_name: myVnet
-subnet_name: mySubnet
-pip_name: myPublicIP
-nsg_name: myNSG
-nic_name: myNIC
-vm_name: myVM01
+
+vnet_name: vnet-vm01
+subnet_name: subnet-vm01
+pip_name: pip-vm01
+nsg_name: nsg-vm01
+nic_name: nic-vm01
+vm_name: vm01
+
 vm_size: Standard_B1s
 admin_username: azureuser
