@@ -1,24 +1,25 @@
-- hosts: localhost
+- name: 📡 ดึง Public IP ของ VM
+  hosts: localhost
   connection: local
-  vars:
-    ansible_python_interpreter: /home/boho/ansible-env/bin/python3
-  tasks:
-    - name: 🔁 ลบไฟล์ ip.txt เดิม (ถ้ามี)
-      file:
-        path: ~/ip.txt
-        state: absent
+  gather_facts: no
 
-    - name: 📥 ดึง Public IP ของ VM
+  vars_files:
+    - ../config/config-dev.yaml
+
+  tasks:
+    - name: 📥 ดึงข้อมูล Public IP จาก Azure
       azure.azcollection.azure_rm_publicipaddress_info:
         resource_group: "{{ resource_group }}"
         name: "{{ pip_name }}"
+        auth_source: env
       register: ip_info
 
-    - name: 🔍 แสดงค่า IP ที่ได้จาก Azure
-      debug:
-        msg: "IP Address: {{ ip_info.azure_publicipaddresses[0].ip_address | default('N/A') }}"
+    - name: ❌ Fail ถ้าไม่พบ IP
+      fail:
+        msg: "ไม่พบ Public IP ของ VM"
+      when: ip_info.azure_publicipaddresses is not defined or ip_info.azure_publicipaddresses | length == 0
 
     - name: 📝 เขียน Public IP ลงไฟล์
       copy:
-        content: "{{ ip_info.azure_publicipaddresses[0].ip_address | default('') }}"
-        dest: ~/ip.txt
+        content: "{{ ip_info.azure_publicipaddresses[0].ip_address }}"
+        dest: "~/ip.txt"

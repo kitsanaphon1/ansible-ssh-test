@@ -2,33 +2,33 @@ pipeline {
   agent any
 
   environment {
-    SSH_USER     = "boho"                             // SSH user ของ Ansible VM
-    ANSIBLE_HOST = "4.145.84.26"                      // IP ของ Ansible VM
-    PROJECT_DIR  = "ansible-ssh-test"                 // Git repo directory
-    GIT_BRANCH   = "dev"
-    GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
+    ANSIBLE_HOST     = "4.145.84.26"                      // IP เครื่อง Ansible
+    PROJECT_DIR      = "ansible-ssh-test"
+    GIT_BRANCH       = "dev"
+    GIT_REPO         = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
+    ANSIBLE_ENV_PATH = "/home/boho/ansible-env"
   }
 
   stages {
     stage('📥 Clone Project on Ansible VM') {
       steps {
         sshagent(['ssh-ansible-agent']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-              if [ ! -d "${PROJECT_DIR}" ]; then
-                git clone ${GIT_REPO}
+          sh '''
+            ssh -o StrictHostKeyChecking=no boho@$ANSIBLE_HOST <<EOF
+              if [ ! -d "$PROJECT_DIR" ]; then
+                git clone $GIT_REPO
               fi
-              cd ${PROJECT_DIR}
+              cd $PROJECT_DIR
               git fetch origin
-              git checkout -B ${GIT_BRANCH} origin/${GIT_BRANCH}
-              git pull origin ${GIT_BRANCH}
+              git checkout -B $GIT_BRANCH origin/$GIT_BRANCH
+              git pull origin $GIT_BRANCH
 EOF
-          """
+          '''
         }
       }
     }
 
-    stage('📡 Run get-ip.yaml to fetch public IP') {
+    stage('🌐 Get Public IP from Azure') {
       steps {
         withCredentials([
           string(credentialsId: 'AZURE_CLIENT_ID',       variable: 'AZURE_CLIENT_ID'),
@@ -37,17 +37,17 @@ EOF
           string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
           sshagent(['ssh-ansible-agent']) {
-            sh """
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-                source ~/ansible-env/bin/activate
-                export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
-                export AZURE_SECRET=${AZURE_SECRET}
-                export AZURE_TENANT=${AZURE_TENANT}
-                export AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
-                cd ${PROJECT_DIR}/playbooks
+            sh '''
+              ssh -o StrictHostKeyChecking=no boho@$ANSIBLE_HOST <<EOF
+                source $ANSIBLE_ENV_PATH/bin/activate
+                export AZURE_CLIENT_ID=$AZURE_CLIENT_ID
+                export AZURE_SECRET=$AZURE_SECRET
+                export AZURE_TENANT=$AZURE_TENANT
+                export AZURE_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID
+                cd $PROJECT_DIR/playbooks
                 ansible-playbook get-ip.yaml -e "@../config/config-dev.yaml"
 EOF
-            """
+            '''
           }
         }
       }
@@ -57,21 +57,14 @@ EOF
       steps {
         sshagent(['ssh-ansible-agent']) {
           script {
-            def ip = sh(
-              script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'cat ~/ip.txt'",
-              returnStdout: true
-            ).trim()
+            def ip = sh(script: "ssh -o StrictHostKeyChecking=no boho@$ANSIBLE_HOST 'cat ~/ip.txt'", returnStdout: true).trim()
+            def user = sh(script: "ssh -o StrictHostKeyChecking=no boho@$ANSIBLE_HOST 'grep admin_username $PROJECT_DIR/config/config-dev.yaml | cut -d\':\' -f2 | tr -d \" \"'", returnStdout: true).trim()
 
-            def vmUser = sh(
-              script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | cut -d ':' -f2 | tr -d ' '\"",
-              returnStdout: true
-            ).trim()
-
-            echo "📍 Target VM IP: ${ip}"
-            echo "👤 SSH User: ${vmUser}"
+            echo "📍 IP: ${ip}"
+            echo "👤 User: ${user}"
 
             env.TARGET_VM_IP = ip
-            env.TARGET_VM_USER = vmUser
+            env.TARGET_VM_USER = user
           }
         }
       }
@@ -80,14 +73,14 @@ EOF
     stage('🐳 Install Docker on Target VM') {
       steps {
         sshagent(['ssh-ansible-agent']) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-              source ~/ansible-env/bin/activate
-              cd ${PROJECT_DIR}/playbooks
-              ANSIBLE_HOST_KEY_CHECKING=False \\
-              ansible-playbook install-docker.yaml -i "${env.TARGET_VM_IP}," --user=${env.TARGET_VM_USER}
+          sh '''
+            ssh -o StrictHostKeyChecking=no boho@$ANSIBLE_HOST <<EOF
+              source $ANSIBLE_ENV_PATH/bin/activate
+              cd $PROJECT_DIR/playbooks
+              ANSIBLE_HOST_KEY_CHECKING=False \
+              ansible-playbook install-docker.yaml -i "$TARGET_VM_IP," --user=$TARGET_VM_USER
 EOF
-          """
+          '''
         }
       }
     }
