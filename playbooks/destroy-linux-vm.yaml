@@ -49,3 +49,4 @@
       azure_rm_resourcegroup:
         name: "{{ resource_group }}"
         state: absent
+        force_delete_nonempty: true  # ✅ บังคับลบแม้มี resource ค้างอยู่
