@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    SSH_USER     = "boho"
+    SSH_USER     = "boho" // สำหรับ SSH เข้า Ansible VM
     ANSIBLE_HOST = "4.145.84.26"
     PROJECT_DIR  = "ansible-ssh-test"
     GIT_BRANCH   = "dev"
@@ -34,19 +34,17 @@ EOF
           string(credentialsId: 'AZURE_CLIENT_ID',       variable: 'AZURE_CLIENT_ID'),
           string(credentialsId: 'AZURE_SECRET',          variable: 'AZURE_SECRET'),
           string(credentialsId: 'AZURE_TENANT',          variable: 'AZURE_TENANT'),
-          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID')
         ]) {
           sshagent(['ssh-ansible-agent']) {
             sh """
               echo "📡 รัน playbook get-ip.yaml ที่เครื่อง Ansible VM"
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
                 source ~/ansible-env/bin/activate
-
                 export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
                 export AZURE_SECRET=${AZURE_SECRET}
                 export AZURE_TENANT=${AZURE_TENANT}
                 export AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
-
                 cd ${PROJECT_DIR}/playbooks
                 ansible-playbook get-ip.yaml -e "@../config/config-dev.yaml"
 EOF
@@ -70,29 +68,29 @@ EOF
     }
 
     stage('🐳 Install Docker and Docker Compose') {
-  steps {
-    script {
-      // ✅ ดึงค่า admin_username จาก config-dev.yaml บน Ansible VM
-      def vmUser = sh(
-        script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
-        returnStdout: true
-      ).trim()
+      steps {
+        script {
+          // ✅ ดึงค่า admin_username จากไฟล์ config-dev.yaml บน Ansible VM
+          def vmUser = sh(
+            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
+            returnStdout: true
+          ).trim()
 
-      echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
+          echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
 
-      sshagent(['ssh-ansible-agent']) {
-        sh """
-          echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
-          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-            source ~/ansible-env/bin/activate
-            cd ${PROJECT_DIR}/playbooks
-            ANSIBLE_HOST_KEY_CHECKING=False \\
-            ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
+          sshagent(['ssh-ansible-agent']) {
+            sh """
+              echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+                source ~/ansible-env/bin/activate
+                cd ${PROJECT_DIR}/playbooks
+                ANSIBLE_HOST_KEY_CHECKING=False \\
+                ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
 EOF
-        """
+            """
+          }
+        }
       }
     }
-  }
-}
   }
 }
