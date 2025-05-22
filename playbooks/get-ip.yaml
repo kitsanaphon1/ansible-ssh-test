@@ -23,7 +23,13 @@
         msg: "ไม่พบ Public IP ของ VM"
       when: ip_info.publicipaddresses is not defined or ip_info.publicipaddresses | length == 0
 
-    - name: 📝 เขียน Public IP ลงไฟล์
+    - name: 🧹 ลบไฟล์ ip.txt เก่าถ้ามี
+      file:
+        path: "/home/boho/ip.txt"
+        state: absent
+        force: yes
+
+    - name: 📝 เขียน Public IP ลงไฟล์ใหม่
       copy:
         content: "{{ ip_info.publicipaddresses[0].ip_address }}"
-        dest: "~/ip.txt"
+        dest: "/home/boho/ip.txt"

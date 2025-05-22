@@ -116,7 +116,9 @@ EOF
         sshagent(['ssh-ansible-agent']) {
           sh '''
             echo "📖 อ่าน IP ที่ได้จากไฟล์"
-            VM_IP=$(ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} cat ~/ip.txt)
+            VM_IP=$(ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} cat /home/${SSH_USER}/ip.txt)
+
+            echo "✅ IP ที่ได้คือ: $VM_IP"
 
             echo "🐳 ติดตั้ง Docker ผ่าน Ansible"
             ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} "
