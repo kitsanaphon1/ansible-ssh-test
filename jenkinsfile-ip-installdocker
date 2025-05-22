@@ -70,27 +70,29 @@ EOF
     }
 
     stage('🐳 Install Docker and Docker Compose') {
-      steps {
-        script {
-          def vmUser = sh(
-            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
-            returnStdout: true
-          ).trim()
-          echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
+  steps {
+    script {
+      // ✅ ดึงค่า admin_username จาก config-dev.yaml บน Ansible VM
+      def vmUser = sh(
+        script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
+        returnStdout: true
+      ).trim()
 
-          sshagent(['ssh-ansible-agent']) {
-            sh """
-              echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-                source ~/ansible-env/bin/activate
-                cd ${PROJECT_DIR}/playbooks
-                ANSIBLE_HOST_KEY_CHECKING=False \\
-                ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
+      echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
+
+      sshagent(['ssh-ansible-agent']) {
+        sh """
+          echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
+          ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+            source ~/ansible-env/bin/activate
+            cd ${PROJECT_DIR}/playbooks
+            ANSIBLE_HOST_KEY_CHECKING=False \\
+            ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
 EOF
-            """
-          }
-        }
+        """
       }
     }
+  }
+}
   }
 }
