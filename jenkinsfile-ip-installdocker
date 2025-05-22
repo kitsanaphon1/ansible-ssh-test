@@ -55,22 +55,24 @@ EOF
 
     stage('📖 Read Target IP and SSH User') {
       steps {
-        script {
-          def ip = sh(
-            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'cat ~/ip.txt'",
-            returnStdout: true
-          ).trim()
+        sshagent(['ssh-ansible-agent']) {
+          script {
+            def ip = sh(
+              script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'cat ~/ip.txt'",
+              returnStdout: true
+            ).trim()
 
-          def vmUser = sh(
-            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | cut -d ':' -f2 | tr -d ' '\"",
-            returnStdout: true
-          ).trim()
+            def vmUser = sh(
+              script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | cut -d ':' -f2 | tr -d ' '\"",
+              returnStdout: true
+            ).trim()
 
-          echo "📍 Target VM IP: ${ip}"
-          echo "👤 SSH User: ${vmUser}"
+            echo "📍 Target VM IP: ${ip}"
+            echo "👤 SSH User: ${vmUser}"
 
-          env.TARGET_VM_IP = ip
-          env.TARGET_VM_USER = vmUser
+            env.TARGET_VM_IP = ip
+            env.TARGET_VM_USER = vmUser
+          }
         }
       }
     }
