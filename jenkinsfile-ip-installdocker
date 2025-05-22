@@ -2,15 +2,15 @@ pipeline {
   agent any
 
   environment {
-    SSH_USER     = "boho" // สำหรับ SSH เข้า Ansible VM
-    ANSIBLE_HOST = "4.145.84.26"
-    PROJECT_DIR  = "ansible-ssh-test"
+    SSH_USER     = "boho"                             // SSH user ของ Ansible VM
+    ANSIBLE_HOST = "4.145.84.26"                      // IP ของ Ansible VM
+    PROJECT_DIR  = "ansible-ssh-test"                 // Git repo directory
     GIT_BRANCH   = "dev"
     GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
   }
 
   stages {
-    stage('📥 Checkout Project on Ansible VM') {
+    stage('📥 Clone Project on Ansible VM') {
       steps {
         sshagent(['ssh-ansible-agent']) {
           sh """
@@ -28,7 +28,7 @@ EOF
       }
     }
 
-    stage('📡 Get Public IP from Azure') {
+    stage('📡 Run get-ip.yaml to fetch public IP') {
       steps {
         withCredentials([
           string(credentialsId: 'AZURE_CLIENT_ID',       variable: 'AZURE_CLIENT_ID'),
@@ -38,7 +38,6 @@ EOF
         ]) {
           sshagent(['ssh-ansible-agent']) {
             sh """
-              echo "📡 รัน playbook get-ip.yaml ที่เครื่อง Ansible VM"
               ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
                 source ~/ansible-env/bin/activate
                 export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
@@ -54,41 +53,39 @@ EOF
       }
     }
 
-    stage('📖 Read IP from ip.txt') {
+    stage('📖 Read Target IP and SSH User') {
       steps {
         script {
           def ip = sh(
             script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} 'cat ~/ip.txt'",
             returnStdout: true
           ).trim()
-          echo "📍 IP ที่ได้จาก Azure คือ: ${ip}"
+
+          def vmUser = sh(
+            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | cut -d ':' -f2 | tr -d ' '\"",
+            returnStdout: true
+          ).trim()
+
+          echo "📍 Target VM IP: ${ip}"
+          echo "👤 SSH User: ${vmUser}"
+
           env.TARGET_VM_IP = ip
+          env.TARGET_VM_USER = vmUser
         }
       }
     }
 
-    stage('🐳 Install Docker and Docker Compose') {
+    stage('🐳 Install Docker on Target VM') {
       steps {
-        script {
-          // ✅ ดึงค่า admin_username จากไฟล์ config-dev.yaml บน Ansible VM
-          def vmUser = sh(
-            script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \"grep admin_username ${PROJECT_DIR}/config/config-dev.yaml | awk '{print \\$2}'\"",
-            returnStdout: true
-          ).trim()
-
-          echo "👤 SSH เข้า VM ด้วย user: ${vmUser}"
-
-          sshagent(['ssh-ansible-agent']) {
-            sh """
-              echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
-              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
-                source ~/ansible-env/bin/activate
-                cd ${PROJECT_DIR}/playbooks
-                ANSIBLE_HOST_KEY_CHECKING=False \\
-                ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${vmUser}
+        sshagent(['ssh-ansible-agent']) {
+          sh """
+            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+              source ~/ansible-env/bin/activate
+              cd ${PROJECT_DIR}/playbooks
+              ANSIBLE_HOST_KEY_CHECKING=False \\
+              ansible-playbook install-docker.yaml -i "${env.TARGET_VM_IP}," --user=${env.TARGET_VM_USER}
 EOF
-            """
-          }
+          """
         }
       }
     }
