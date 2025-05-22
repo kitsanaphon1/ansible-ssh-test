@@ -69,4 +69,4 @@
           managed_disk_type: Standard_LRS
         admin_ssh_key:
           username: "{{ admin_username }}"
-          public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+          public_key: "{{ admin_ssh_public_key }}"
