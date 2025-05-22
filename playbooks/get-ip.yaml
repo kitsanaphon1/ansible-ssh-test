@@ -14,12 +14,16 @@
         auth_source: env
       register: ip_info
 
+    - name: 🐛 DEBUG ข้อมูล IP ที่ได้
+      debug:
+        var: ip_info
+
     - name: ❌ Fail ถ้าไม่พบ IP
       fail:
         msg: "ไม่พบ Public IP ของ VM"
-      when: ip_info.azure_publicipaddresses is not defined or ip_info.azure_publicipaddresses | length == 0
+      when: ip_info.publicipaddresses is not defined or ip_info.publicipaddresses | length == 0
 
     - name: 📝 เขียน Public IP ลงไฟล์
       copy:
-        content: "{{ ip_info.azure_publicipaddresses[0].ip_address }}"
+        content: "{{ ip_info.publicipaddresses[0].ip_address }}"
         dest: "~/ip.txt"
