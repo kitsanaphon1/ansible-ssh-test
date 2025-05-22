@@ -22,10 +22,10 @@ pipeline {
         ]) {
           sshagent(['ssh-ansible-agent']) {
             sh """
-              echo "🔐 สร้าง Public Key จาก PRIVATE_KEY"
+              echo "🔐 สร้าง Public Key จาก Jenkins Credential"
               PUBLIC_KEY=\$(ssh-keygen -y -f "$PRIVATE_KEY")
 
-              echo "📄 สร้างสคริปต์ remote"
+              echo "📄 สร้างสคริปต์ remote พร้อมฝัง PUBLIC_KEY"
               cat > run_ansible_remote.sh <<EOF
 #!/bin/bash
 set -e
@@ -35,6 +35,7 @@ export AZURE_CLIENT_ID="${AZURE_CLIENT_ID}"
 export AZURE_SECRET="${AZURE_SECRET}"
 export AZURE_TENANT="${AZURE_TENANT}"
 export AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
+export PUBLIC_KEY="${PUBLIC_KEY}"
 
 cd ~
 
@@ -55,7 +56,7 @@ else
   echo "🚀 สร้าง VM"
   ansible-playbook create-linux-vm.yaml \\
     -e "@../config/config-dev.yaml" \\
-    -e "admin_ssh_public_key='${PUBLIC_KEY}'"
+    -e "admin_ssh_public_key=\${PUBLIC_KEY}"
 fi
 EOF
 
