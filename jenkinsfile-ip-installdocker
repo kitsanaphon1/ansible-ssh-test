@@ -24,7 +24,13 @@ pipeline {
         ]) {
           sshagent(['ssh-ansible-agent']) {
             sh '''
-              echo "🔐 สร้าง SSH Key ชื่อ id_rsa_ansible_final"
+              echo "🔐 ตรวจสอบและสร้าง SSH Key ชื่อ id_rsa_ansible_final"
+
+              if [ -f "$WORKSPACE/$KEY_NAME" ] || [ -f "$WORKSPACE/${KEY_NAME}.pub" ]; then
+                echo "⚠️ พบ key เดิมอยู่แล้ว → ลบทิ้งก่อนสร้างใหม่"
+                rm -f "$WORKSPACE/$KEY_NAME" "$WORKSPACE/${KEY_NAME}.pub"
+              fi
+
               ssh-keygen -t rsa -b 4096 -f "$WORKSPACE/$KEY_NAME" -N ""
 
               echo "📤 Copy private key ไป Ansible VM"
