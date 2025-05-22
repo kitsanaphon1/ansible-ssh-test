@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   environment {
-    SSH_USER     = "boho"                          // SSH user ที่ใช้กับ Ansible VM และ target VM
-    ANSIBLE_HOST = "4.145.84.26"                   // IP ของเครื่องที่รัน Ansible (ไม่ใช่ VM เป้าหมาย)
+    SSH_USER     = "boho"                          // SSH user ของทั้ง Ansible VM และ VM เป้าหมาย
+    ANSIBLE_HOST = "4.145.84.26"                   // IP ของ Ansible VM
     PROJECT_DIR  = "ansible-ssh-test"
     GIT_BRANCH   = "dev"
     GIT_REPO     = "https://github.com/kitsanaphon1/ansible-ssh-test.git"
@@ -28,16 +28,30 @@ EOF
       }
     }
 
-    stage('📡 Get Public IP') {
+    stage('📡 Get Public IP from Azure') {
       steps {
-        sshagent(['ssh-ansible-agent']) {
-          sh """
-            echo "📡 ดึง Public IP จาก Azure"
-            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \\
-              'cd ${PROJECT_DIR}/playbooks && \\
-               source ~/ansible-env/bin/activate && \\
-               ansible-playbook get-ip.yaml -e "@../config/config-dev.yaml"'
-          """
+        withCredentials([
+          string(credentialsId: 'AZURE_CLIENT_ID',       variable: 'AZURE_CLIENT_ID'),
+          string(credentialsId: 'AZURE_SECRET',          variable: 'AZURE_SECRET'),
+          string(credentialsId: 'AZURE_TENANT',          variable: 'AZURE_TENANT'),
+          string(credentialsId: 'AZURE_SUBSCRIPTION_ID', variable: 'AZURE_SUBSCRIPTION_ID'),
+        ]) {
+          sshagent(['ssh-ansible-agent']) {
+            sh """
+              echo "📡 รัน playbook get-ip.yaml ที่เครื่อง Ansible VM"
+              ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+                source ~/ansible-env/bin/activate
+
+                export AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+                export AZURE_SECRET=${AZURE_SECRET}
+                export AZURE_TENANT=${AZURE_TENANT}
+                export AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+
+                cd ${PROJECT_DIR}/playbooks
+                ansible-playbook get-ip.yaml -e "@../config/config-dev.yaml"
+EOF
+            """
+          }
         }
       }
     }
@@ -60,11 +74,12 @@ EOF
         sshagent(['ssh-ansible-agent']) {
           sh """
             echo "🐳 ติดตั้ง Docker บน VM เป้าหมาย ${env.TARGET_VM_IP}"
-            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} \\
-              'cd ${PROJECT_DIR}/playbooks && \\
-               source ~/ansible-env/bin/activate && \\
-               ANSIBLE_HOST_KEY_CHECKING=False \\
-               ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${SSH_USER}'
+            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${ANSIBLE_HOST} <<EOF
+              source ~/ansible-env/bin/activate
+              cd ${PROJECT_DIR}/playbooks
+              ANSIBLE_HOST_KEY_CHECKING=False \\
+              ansible-playbook install-docker.yaml -i ${env.TARGET_VM_IP}, --user=${SSH_USER}
+EOF
           """
         }
       }
