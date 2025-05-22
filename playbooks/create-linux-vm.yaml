@@ -4,69 +4,69 @@
     ansible_python_interpreter: /home/boho/ansible-env/bin/python3
 
   tasks:
-    - name: 📦 Create resource group
-      azure_rm_resourcegroup:
+    - name: 📦 สร้าง Resource Group
+      azure.azcollection.azure_rm_resourcegroup:
         name: "{{ resource_group }}"
         location: "{{ location }}"
 
-    - name: 🌐 Create virtual network
-      azure_rm_virtualnetwork:
-        resource_group: "{{ resource_group }}"
+    - name: 🌐 สร้าง Virtual Network
+      azure.azcollection.azure_rm_virtualnetwork:
         name: "{{ vnet_name }}"
+        resource_group: "{{ resource_group }}"
         address_prefixes: "10.0.0.0/16"
 
-    - name: 🔻 Create subnet
-      azure_rm_subnet:
-        resource_group: "{{ resource_group }}"
+    - name: 🧩 สร้าง Subnet
+      azure.azcollection.azure_rm_subnet:
         name: "{{ subnet_name }}"
+        resource_group: "{{ resource_group }}"
         address_prefix: "10.0.1.0/24"
         virtual_network: "{{ vnet_name }}"
 
-    - name: 🌐 Create public IP
-      azure_rm_publicipaddress:
-        resource_group: "{{ resource_group }}"
-        name: "{{ pip_name }}"
-        allocation_method: Static
-
-    - name: 🛡️ Create network security group
-      azure_rm_securitygroup:
-        resource_group: "{{ resource_group }}"
+    - name: 🛡️ สร้าง Network Security Group
+      azure.azcollection.azure_rm_securitygroup:
         name: "{{ nsg_name }}"
+        resource_group: "{{ resource_group }}"
         rules:
-          - name: allow-ssh
+          - name: AllowSSH
             protocol: Tcp
             destination_port_range: 22
             access: Allow
             priority: 1001
             direction: Inbound
 
-    - name: 🔗 Create network interface
-      azure_rm_networkinterface:
+    - name: 🌐 สร้าง Public IP
+      azure.azcollection.azure_rm_publicipaddress:
+        name: "{{ pip_name }}"
         resource_group: "{{ resource_group }}"
+        allocation_method: Static
+
+    - name: 🧷 สร้าง Network Interface
+      azure.azcollection.azure_rm_networkinterface:
         name: "{{ nic_name }}"
+        resource_group: "{{ resource_group }}"
         virtual_network: "{{ vnet_name }}"
         subnet: "{{ subnet_name }}"
         public_ip_name: "{{ pip_name }}"
         security_group: "{{ nsg_name }}"
 
-    - name: 🖥️ Create Linux VM
-      azure_rm_virtualmachine:
+    - name: 🖥 สร้าง Virtual Machine
+      azure.azcollection.azure_rm_virtualmachine:
         resource_group: "{{ resource_group }}"
         name: "{{ vm_name }}"
-        location: "{{ location }}"
         vm_size: "{{ vm_size }}"
         admin_username: "{{ admin_username }}"
         ssh_password_enabled: false
-        managed_disk_type: Standard_LRS
-        ssh_public_keys:
-          - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
-            key_data: "{{ lookup('env', 'PUBLIC_KEY') }}"
         network_interfaces: "{{ nic_name }}"
         image:
+          offer: UbuntuServer
           publisher: Canonical
-          offer: 0001-com-ubuntu-server-focal
           sku: 20_04-lts
           version: latest
-        auth_source: env
-        state: present
-
+        os_disk:
+          name: "{{ vm_name }}_osdisk"
+          caching: ReadWrite
+          create_option: FromImage
+          managed_disk_type: Standard_LRS
+        admin_ssh_key:
+          username: "{{ admin_username }}"
+          public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
