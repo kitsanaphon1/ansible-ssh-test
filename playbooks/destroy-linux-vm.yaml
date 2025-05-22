@@ -1,0 +1,51 @@
+- hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: /home/boho/ansible-env/bin/python3
+
+  tasks:
+    - name: ❌ ลบ Virtual Machine
+      azure_rm_virtualmachine:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vm_name }}"
+        state: absent
+        remove_on_absent:
+          - all_disks
+          - public_ips
+          - network_interfaces
+
+    - name: ❌ ลบ Network Interface
+      azure_rm_networkinterface:
+        resource_group: "{{ resource_group }}"
+        name: "{{ nic_name }}"
+        state: absent
+
+    - name: ❌ ลบ Public IP
+      azure_rm_publicipaddress:
+        resource_group: "{{ resource_group }}"
+        name: "{{ pip_name }}"
+        state: absent
+
+    - name: ❌ ลบ Subnet (ถ้าไม่ใช้ร่วมกับ resource อื่น)
+      azure_rm_subnet:
+        resource_group: "{{ resource_group }}"
+        name: "{{ subnet_name }}"
+        virtual_network: "{{ vnet_name }}"
+        state: absent
+
+    - name: ❌ ลบ Virtual Network
+      azure_rm_virtualnetwork:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vnet_name }}"
+        state: absent
+
+    - name: ❌ ลบ Network Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ resource_group }}"
+        name: "{{ nsg_name }}"
+        state: absent
+
+    - name: ❌ ลบ Resource Group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group }}"
+        state: absent

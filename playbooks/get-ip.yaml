@@ -1,0 +1,21 @@
+# playbooks/get-ip.yaml
+- hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: /home/boho/ansible-env/bin/python3
+  tasks:
+    - name: 🔁 ลบไฟล์ ip.txt เดิม (ถ้ามี)
+      file:
+        path: ~/ip.txt
+        state: absent
+
+    - name: 📥 ดึง Public IP ของ VM
+      azure_rm_publicipaddress_info:
+        resource_group: "{{ resource_group }}"
+        name: "{{ pip_name }}"
+      register: ip_info
+
+    - name: 📝 เขียน Public IP ลงไฟล์
+      copy:
+        content: "{{ ip_info.azure_publicipaddresses[0].ip_address }}"
+        dest: ~/ip.txt
